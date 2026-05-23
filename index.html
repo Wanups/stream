@@ -700,8 +700,13 @@ function updateModalContent(idx) {
 
   var imgHtml = '';
   if (locked) {
-    // Effet : Emoji gris + Halo coloré de rareté dans la modale
-    imgHtml = '<div class="modal-emoji" style="filter: blur(25px) grayscale(1); color: #fff; text-shadow: 0 0 40px ' + rarityColor + '">' + plush.emoji + '</div>';
+    // LAYERED APPROACH : Un halo de couleur pur derrière, et l'emoji gris devant
+    imgHtml = '<div style="position:relative; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' +
+              // Le Halo (indépendant des filtres de l'emoji)
+              '<div style="position:absolute; width:150px; height:150px; background:' + rarityColor + '; filter:blur(50px); opacity:0.5; border-radius:50%;"></div>' +
+              // L'Emoji (en noir et blanc et flou)
+              '<div class="modal-emoji" style="position:relative; filter: blur(20px) grayscale(1); color: rgba(255,255,255,0.4); z-index:2;">' + plush.emoji + '</div>' +
+              '</div>';
   } else {
     imgHtml = plush.image && plush.image !== ''
       ? '<img class="modal-img" src="' + plush.image + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
