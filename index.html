@@ -243,9 +243,7 @@
       left: 8px;
       font-size: 14px;
       font-weight: 600;
-      color: var(--gold);
       letter-spacing: 1px;
-      text-shadow: 0 0 10px rgba(0,0,0,0.8);
       z-index: 5;
     }
     .plush-count { 
@@ -627,7 +625,10 @@ function renderGrid(filter) {
         : '<div class="plush-emoji">' + p.emoji + '</div>';
 
       html += '<div class="plush-card ' + rarity + ' ' + locked + '" style="animation-delay:' + (i * 0.02) + 's" onclick="openModalById(\'' + p.id + '\')">';
-      if (numStr) html += '<div class="plush-number">' + numStr + '</div>';
+      if (numStr) {
+        var color = RARITY_COLORS[p.rarity] || 'var(--text2)';
+        html += '<div class="plush-number" style="color:' + color + '; text-shadow: 0 0 10px ' + color + '44">' + numStr + '</div>';
+      }
       if (count > 1) html += '<div class="plush-count">×' + count + '</div>';
       html += '<div class="plush-img-wrap">' + imgHtml + '</div>';
       html += '<div class="plush-name">' + (locked ? '???????' : p.name) + '</div>';
