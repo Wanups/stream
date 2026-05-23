@@ -195,11 +195,11 @@
 
     .plush-card:hover { transform: translateY(-4px); border-color: var(--silver-dark); background: var(--bg3); }
 
-    /* SILHOUETTE LOGIC - Solid Light Gray Shadow */
+    /* BLUR LOGIC - Blurred and Grayscale for locked items */
     .plush-card.locked .plush-img, 
     .modal-content.locked .modal-img {
-      filter: brightness(0) invert(0.3); /* Crée une ombre chinoise grise uniforme sans détails */
-      opacity: 0.8;
+      filter: blur(25px) grayscale(1);
+      opacity: 0.3;
       transition: all 0.3s;
     }
 
@@ -619,10 +619,16 @@ function renderGrid(filter) {
       var locked  = count === 0 ? 'locked' : '';
       var numStr  = p.number ? '#' + p.number.toString().padStart(3, '0') : '';
       
-      var imgHtml = p.image && p.image !== ''
-        ? '<img class="plush-img" src="' + p.image + '" alt="' + p.name + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
-          + '<div class="plush-emoji" style="display:none">' + p.emoji + '</div>'
-        : '<div class="plush-emoji">' + p.emoji + '</div>';
+      // OPTION 2: On ne charge JAMAIS l'image réelle si verrouillé
+      var imgHtml = '';
+      if (locked) {
+        imgHtml = '<div class="plush-emoji">🧸</div>'; // Emoji générique
+      } else {
+        imgHtml = p.image && p.image !== ''
+          ? '<img class="plush-img" src="' + p.image + '" alt="' + p.name + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
+            + '<div class="plush-emoji" style="display:none">' + p.emoji + '</div>'
+          : '<div class="plush-emoji">' + p.emoji + '</div>';
+      }
 
       html += '<div class="plush-card ' + rarity + ' ' + locked + '" style="animation-delay:' + (i * 0.02) + 's" onclick="openModalById(\'' + p.id + '\')">';
       if (numStr) {
