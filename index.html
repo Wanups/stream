@@ -203,10 +203,14 @@
       transition: all 0.3s;
     }
 
-    .plush-card.locked .plush-emoji,
-    .modal-content.locked .modal-emoji {
+    .plush-card.locked .plush-emoji {
       filter: grayscale(1) blur(15px);
       opacity: 0.1;
+    }
+
+    .modal-content.locked .modal-emoji {
+      filter: blur(25px); /* On enlève le grayscale pour laisser passer la couleur */
+      opacity: 0.25;
     }
 
     .plush-card.locked .plush-name { opacity: 0.5; letter-spacing: 4px; }
@@ -548,14 +552,27 @@ function loadCollections() {
     fetch(baseUrl + 'collections.json?t=' + Date.now()).then(function(r){return r.json();}),
     fetch(baseUrl + 'plushies.json?t=' + Date.now()).then(function(r){return r.json();})
   ])
-  .then(function(results) {
-    allCollections = results[0] || {};
-    userCollection = allCollections[username] || {};
-    if (Array.isArray(results[1]) && results[1].length > 0) {
-      PLUSHIES = results[1];
-    }
-    render();
-  })
+    .then(function(results) {
+      allCollections = results[0] || {};
+      userCollection = allCollections[username] || {};
+      if (Array.isArray(results[1]) && results[1].length > 0) {
+        // PROTECTION TOTALE : On nettoie les données avant de les stocker
+        PLUSHIES = results[1].map(function(p) {
+          if (!userCollection[p.id]) {
+            return { 
+              id: p.id, 
+              rarity: p.rarity, 
+              number: p.number, 
+              name: '???????', 
+              emoji: '🧸', 
+              image: '' 
+            };
+          }
+          return p;
+        });
+      }
+      render();
+    })
   .catch(function(e) {
     console.error('Erreur chargement:', e);
     showError('Collection introuvable.', 'Ouvre une Plush Box sur le stream !');
@@ -679,10 +696,18 @@ function updateModalContent(idx) {
 
   content.className = 'modal-content ' + plush.rarity + (locked ? ' locked' : '');
 
-  var imgHtml = plush.image && plush.image !== ''
-    ? '<img class="modal-img" src="' + plush.image + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
-      + '<div class="modal-emoji" style="display:none">' + plush.emoji + '</div>'
-    : '<div class="modal-emoji">' + plush.emoji + '</div>';
+  var rarityColor = RARITY_COLORS[plush.rarity] || 'var(--text2)';
+
+  var imgHtml = '';
+  if (locked) {
+    // Effet : Emoji gris + Halo coloré de rareté dans la modale
+    imgHtml = '<div class="modal-emoji" style="filter: blur(25px) grayscale(1); color: #fff; text-shadow: 0 0 40px ' + rarityColor + '">' + plush.emoji + '</div>';
+  } else {
+    imgHtml = plush.image && plush.image !== ''
+      ? '<img class="modal-img" src="' + plush.image + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
+        + '<div class="modal-emoji" style="display:none">' + plush.emoji + '</div>'
+      : '<div class="modal-emoji">' + plush.emoji + '</div>';
+  }
 
   var name   = locked ? 'Mystère' : plush.name;
   var numStr = plush.number ? '#' + plush.number.toString().padStart(3, '0') : '';
@@ -693,7 +718,7 @@ function updateModalContent(idx) {
 
   body.innerHTML = 
     '<div class="modal-img-wrap">' + imgHtml + '</div>' +
-    '<div class="modal-rarity" style="color:' + RARITY_COLORS[plush.rarity] + '">' + rarity + ' ' + numStr + '</div>' +
+    '<div class="modal-rarity" style="color:' + rarityColor + '">' + rarity + ' ' + numStr + '</div>' +
     '<div class="modal-name">' + name + '</div>' +
     '<div class="modal-desc">' + desc + '</div>';
 
