@@ -220,9 +220,107 @@
         h2 { margin: 0; text-align: center; color: #1a1a1a; font-size: 20px; font-weight: 700; margin-bottom: 10px; }
         .page-footer { margin-top: auto; text-align: center; font-size: 10px; color: #ccc; letter-spacing: 2px; }
 
+        /* LEADERBOARD STYLES */
+        .leaderboard-section {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 60px;
+            margin-bottom: 40px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            border: var(--cartoon-border);
+            border-color: rgba(255,255,255,0.1);
+            padding: 30px;
+            animation: fadeIn 1s ease 0.5s both;
+        }
+
+        .leaderboard-title {
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 900;
+            text-shadow: 2px 2px 0px #1a1a1a;
+        }
+
+        .leaderboard-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .leaderboard-item {
+            display: grid;
+            grid-template-columns: 50px 1fr 100px;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+            border-color: var(--passport-color);
+        }
+
+        .leaderboard-rank {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--accent-color);
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .leaderboard-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .leaderboard-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+        }
+
+        .leaderboard-username {
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+
+        .leaderboard-stamps {
+            text-align: right;
+            font-weight: 700;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .leaderboard-stamps span {
+            color: var(--accent-color);
+            font-size: 18px;
+        }
+
+        .leaderboard-item.is-current {
+            background: var(--passport-color);
+            border-color: var(--accent-color);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         @media (max-width: 500px) {
             .passport-container { margin-top: 20px; }
             .btn { padding: 10px 16px; font-size: 10px; }
+            .leaderboard-item { grid-template-columns: 40px 1fr 80px; padding: 10px 15px; }
+            .leaderboard-username { font-size: 14px; }
+            .leaderboard-stamps { font-size: 12px; }
+            .leaderboard-stamps span { font-size: 16px; }
         }
     </style>
 </head>
@@ -284,6 +382,13 @@
         Feuillette ton passeport avec les boutons ou en cliquant sur les pages
     </p>
 
+    <div class="leaderboard-section">
+        <h2 class="leaderboard-title">Classement des voyageur·euse</h2>
+        <div id="leaderboard-list" class="leaderboard-grid">
+            <p style="text-align: center; color: #888;">Chargement du classement...</p>
+        </div>
+    </div>
+
     <a id="plush-shortcut" href="#" class="nav-shortcut-bottom" title="Voir mes Peluches">
         <span class="nav-shortcut-icon">🧸</span>
         <span class="nav-shortcut-label">Ta collection de peluches</span>
@@ -318,6 +423,7 @@
 
             await loadData();
             initPassport();
+            renderLeaderboard();
             
             document.getElementById('loading').style.opacity = '0';
             setTimeout(() => {
@@ -379,11 +485,61 @@
 
         function getRank(login) {
             if (!allCollections || Object.keys(allCollections).length === 0) return "N/A";
-            const ranking = Object.entries(allCollections)
-                .map(([user, s]) => ({ user, percent: getCollectionPercent(s) }))
-                .sort((a, b) => b.percent - a.percent);
-            const rank = ranking.findIndex(r => r.user === login) + 1;
-            return rank > 0 ? "TOP " + rank : "N/A";
+            
+            const currentUserStamps = allCollections[login] || [];
+            const currentCount = currentUserStamps.length;
+            
+            // Calcul du rang : 1 + nombre de personnes ayant strictement plus de tampons
+            const usersAhead = Object.values(allCollections).filter(s => s.length > currentCount).length;
+            const rank = usersAhead + 1;
+            
+            return "TOP " + rank;
+        }
+
+        function renderLeaderboard() {
+            const listContainer = document.getElementById('leaderboard-list');
+            if (!allCollections || Object.keys(allCollections).length === 0) {
+                listContainer.innerHTML = '<p style="text-align: center; color: #888;">Aucun voyageur pour le moment.</p>';
+                return;
+            }
+
+            const rankingData = Object.entries(allCollections)
+                .map(([user, s]) => ({ user, count: s.length }))
+                .sort((a, b) => b.count - a.count);
+
+            let html = '';
+            let currentRank = 0;
+            let lastCount = -1;
+            let displayedItems = 0;
+
+            for (let i = 0; i < rankingData.length; i++) {
+                const entry = rankingData[i];
+                
+                // Calcul du rang avec gestion des égalités (1, 1, 1, 4...)
+                if (entry.count !== lastCount) {
+                    currentRank = i + 1;
+                }
+                lastCount = entry.count;
+
+                // On limite l'affichage aux 10 premiers rangs ou entrées (selon préférence habituelle, ici on garde une limite de 10 entrées)
+                if (displayedItems >= 10) break;
+                displayedItems++;
+
+                const isCurrent = entry.user === username;
+                const avatar = `https://unavatar.io/twitch/${entry.user}`;
+                html += `
+                    <a href="?user=${entry.user}" class="leaderboard-item ${isCurrent ? 'is-current' : ''}">
+                        <div class="leaderboard-rank">#${currentRank}</div>
+                        <div class="leaderboard-user">
+                            <img src="${avatar}" class="leaderboard-avatar" onerror="this.src='https://static-cdn.jtvnw.net/ttv-static/404_user_150x150.png'">
+                            <div class="leaderboard-username">${entry.user.toUpperCase()}</div>
+                        </div>
+                        <div class="leaderboard-stamps"><span>${entry.count}</span> tampons</div>
+                    </a>
+                `;
+            }
+
+            listContainer.innerHTML = html;
         }
 
         function initPassport() {
