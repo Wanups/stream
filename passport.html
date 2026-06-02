@@ -315,12 +315,29 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 500px) {
-            .passport-container { margin-top: 20px; }
+            body { padding: 10px; }
+            .passport-container { margin-top: 20px; height: 540px; }
+            .passport-scene { transform: scale(0.85) rotateX(15deg) rotateY(0deg) translateX(100vw); }
+            .passport-scene.visible { transform: scale(0.85) rotateX(15deg) rotateY(0deg) translateX(0); }
             .btn { padding: 10px 16px; font-size: 10px; }
-            .leaderboard-item { grid-template-columns: 40px 1fr 80px; padding: 10px 15px; }
-            .leaderboard-username { font-size: 14px; }
-            .leaderboard-stamps { font-size: 12px; }
-            .leaderboard-stamps span { font-size: 16px; }
+            
+            .leaderboard-section { 
+                padding: 15px; 
+                margin-top: 30px; 
+                border-radius: 15px;
+            }
+            .leaderboard-title { font-size: 16px; margin-bottom: 15px; letter-spacing: 2px; }
+            
+            .leaderboard-item { 
+                grid-template-columns: 35px 1fr 75px; 
+                padding: 8px 12px; 
+                gap: 8px;
+            }
+            .leaderboard-rank { font-size: 16px; }
+            .leaderboard-avatar { width: 28px; height: 28px; }
+            .leaderboard-username { font-size: 12px; }
+            .leaderboard-stamps { font-size: 11px; }
+            .leaderboard-stamps span { font-size: 14px; }
         }
     </style>
 </head>
