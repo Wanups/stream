@@ -573,11 +573,22 @@
             listContainer.innerHTML = html;
         }
 
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return new Date(0);
+            // format DD/MM/YYYY -> YYYY, MM-1, DD
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+
         function initPassport() {
             const stack = document.getElementById('pages-stack');
             const base  = document.getElementById('base-page-content');
             stack.innerHTML = '';
             base.innerHTML = '';
+
+            // Trier les tampons par date (du plus ancien au plus récent)
+            stamps.sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
             const percent = getCollectionPercent(stamps);
             const rank = getRank(username);
