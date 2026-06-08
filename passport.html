@@ -496,18 +496,27 @@
 
         function getCollectionPercent(userStamps) {
             if (!knownGames || knownGames.length === 0) return 0;
-            const owned = userStamps.filter(s => knownGames.some(g => g.toLowerCase() === s.game.toLowerCase())).length;
-            return Math.round((owned / knownGames.length) * 100);
+            const validStamps = userStamps.filter(s => s && s.game);
+            const ownedGames = new Set();
+            validStamps.forEach(s => {
+                const matchingGame = knownGames.find(g => g.toLowerCase() === s.game.toLowerCase());
+                if (matchingGame) ownedGames.add(matchingGame.toLowerCase());
+            });
+            return Math.round((ownedGames.size / knownGames.length) * 100);
         }
 
         function getRank(login) {
             if (!allCollections || Object.keys(allCollections).length === 0) return "N/A";
             
-            const currentUserStamps = allCollections[login] || [];
-            const currentCount = currentUserStamps.length;
+            const getUniqueCount = (s) => {
+                const games = new Set((s || []).filter(x => x && x.game).map(x => x.game.toLowerCase()));
+                return games.size;
+            };
+
+            const currentCount = getUniqueCount(allCollections[login]);
             
-            // Calcul du rang : 1 + nombre de personnes ayant strictement plus de tampons
-            const usersAhead = Object.values(allCollections).filter(s => s.length > currentCount).length;
+            // Calcul du rang : 1 + nombre de personnes ayant strictement plus de tampons uniques
+            const usersAhead = Object.values(allCollections).filter(s => getUniqueCount(s) > currentCount).length;
             const rank = usersAhead + 1;
             
             return "TOP " + rank;
@@ -520,8 +529,13 @@
                 return;
             }
 
+            const getUniqueCount = (s) => {
+                const games = new Set((s || []).filter(x => x && x.game).map(x => x.game.toLowerCase()));
+                return games.size;
+            };
+
             const rankingData = Object.entries(allCollections)
-                .map(([user, s]) => ({ user, count: s.length }))
+                .map(([user, s]) => ({ user, count: getUniqueCount(s) }))
                 .sort((a, b) => b.count - a.count);
 
             let html = '';
